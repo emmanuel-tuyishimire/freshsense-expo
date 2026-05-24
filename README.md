@@ -22,3 +22,5 @@ FreshSense is a biodegradable smart sticker system powered by plant-based chroma
 **TUYISHIMIRE Emmanuel**
 * [GitHub](https://github.com/emmanuel-tuyishimire)
 * [LinkedIn](www.linkedin.com/in/tuyishimire-emmanuel)
+* * **Shairana Rubaiyat Apsora**
+* * **Sara**
