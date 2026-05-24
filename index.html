@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreshSense — Intelligent Freshness, Zero Waste</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy:    '#003366',
+            navyL:   '#004080',
+            navyD:   '#001f40',
+            mint:    '#11CAA0',
+            mintD:   '#0da882',
+            cream:   '#F8F9FA',
+            muted:   '#8BA8C4',
+          },
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            body:    ['DM Sans', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ─── Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: #001f40;
+      color: #F8F9FA;
+      overflow-x: hidden;
+    }
+
+    /* ─── Custom Scrollbar ──────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #001f40; }
+    ::-webkit-scrollbar-thumb { background: #11CAA0; border-radius: 3px; }
+
+    /* ─── Noise texture overlay ─────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .4;
+    }
+
+    /* ─── Glassmorphism ─────────────────────────────────── */
+    .glass {
+      background: rgba(0, 51, 102, 0.55);
+      backdrop-filter: blur(18px) saturate(1.5);
+      -webkit-backdrop-filter: blur(18px) saturate(1.5);
+      border: 1px solid rgba(17, 202, 160, 0.18);
+    }
+    .glass-light {
+      background: rgba(248, 249, 250, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(248, 249, 250, 0.12);
+    }
+    .card-cream {
+      background: #F8F9FA;
+      color: #003366;
+    }
+
+    /* ─── Nav ───────────────────────────────────────────── */
+    #navbar {
+      transition: all 0.4s ease;
+    }
+    #navbar.scrolled {
+      background: rgba(0, 20, 45, 0.92) !important;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 4px 40px rgba(17,202,160,0.08);
+    }
+
+    /* ─── Hero Gradient ─────────────────────────────────── */
+    .hero-bg {
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(17,202,160,0.18) 0%, transparent 70%),
+                  radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0,64,128,0.4) 0%, transparent 70%),
+                  linear-gradient(160deg, #001f40 0%, #003366 50%, #002244 100%);
+    }
+    .hero-grid {
+      background-image: linear-gradient(rgba(17,202,160,0.07) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(17,202,160,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ─── Sensor Animation ──────────────────────────────── */
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.85); opacity: 1; }
+      70%  { transform: scale(1.35); opacity: 0; }
+      100% { transform: scale(0.85); opacity: 0; }
+    }
+    @keyframes sensor-breathe {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(17,202,160,0.6), 0 0 20px rgba(17,202,160,0.4); }
+      50%       { box-shadow: 0 0 0 16px rgba(17,202,160,0), 0 0 40px rgba(17,202,160,0.2); }
+    }
+    .sensor-dot {
+      animation: sensor-breathe 2.4s ease-in-out infinite;
+    }
+    .pulse-ring::after {
+      content: '';
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      animation: pulse-ring 2.4s ease-out infinite;
+    }
+
+    /* ─── Counter ───────────────────────────────────────── */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .counter-digit { animation: countUp 0.3s ease forwards; }
+
+    /* ─── SDG Cards ─────────────────────────────────────── */
+    .sdg-card { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+    .sdg-card:hover, .sdg-card.active {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(17,202,160,0.5) !important;
+      box-shadow: 0 20px 60px rgba(17,202,160,0.15), 0 0 0 1px rgba(17,202,160,0.25);
+    }
+    .sdg-detail {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease, padding 0.3s ease;
+      opacity: 0;
+    }
+    .sdg-detail.open { max-height: 400px; opacity: 1; padding-top: 1rem; }
+
+    /* ─── Product Tabs ──────────────────────────────────── */
+    .tab-content { display: none; animation: fadeSlide 0.4s ease forwards; }
+    .tab-content.active { display: block; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateX(12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .tab-btn { transition: all 0.3s ease; position: relative; }
+    .tab-btn::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px; background: #11CAA0;
+      transform: scaleX(0); transition: transform 0.3s ease;
+    }
+    .tab-btn.active::after { transform: scaleX(1); }
+    .tab-btn.active { color: #11CAA0; }
+
+    /* ─── ROI Slider ─────────────────────────────────────── */
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 6px;
+      background: linear-gradient(90deg, #11CAA0 var(--pct,50%), rgba(255,255,255,0.15) var(--pct,50%));
+      border-radius: 3px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px;
+      background: #11CAA0; border-radius: 50%;
+      border: 3px solid #001f40;
+      box-shadow: 0 0 12px rgba(17,202,160,0.6);
+      transition: transform 0.2s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .roi-value {
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    /* ─── Timeline ───────────────────────────────────────── */
+    .timeline-item { transition: all 0.3s ease; }
+    .timeline-item:hover .timeline-dot {
+      transform: scale(1.4);
+      box-shadow: 0 0 20px rgba(17,202,160,0.5);
+    }
+    .timeline-line {
+      background: linear-gradient(180deg, #11CAA0, rgba(17,202,160,0.1));
+    }
+
+    /* ─── CTA Button ─────────────────────────────────────── */
+    .btn-primary {
+      background: linear-gradient(135deg, #11CAA0, #0da882);
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(17,202,160,0.4); }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-outline {
+      border: 1.5px solid rgba(17,202,160,0.5); color: #11CAA0;
+      transition: all 0.3s ease; background: transparent;
+    }
+    .btn-outline:hover {
+      background: rgba(17,202,160,0.1);
+      border-color: #11CAA0;
+      transform: translateY(-2px);
+    }
+
+    /* ─── Sticker Animation ──────────────────────────────── */
+    @keyframes colorShift {
+      0%,100% { background: linear-gradient(135deg, #11CAA0, #0da882); }
+      33%      { background: linear-gradient(135deg, #f0c040, #e0a020); }
+      66%      { background: linear-gradient(135deg, #e05050, #c03030); }
+    }
+    .sticker-demo { animation: colorShift 6s ease-in-out infinite; }
+
+    /* ─── Scroll Reveal ──────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left  { opacity: 0; transform: translateX(-30px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(30px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* ─── Section divider ────────────────────────────────── */
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #11CAA0;
+      opacity: 0.9;
+    }
+
+    /* ─── Floating orbs ─────────────────────────────────── */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0px) scale(1); }
+      50%      { transform: translateY(-30px) scale(1.05); }
+    }
+    .orb-1 { animation: float 8s ease-in-out infinite; }
+    .orb-2 { animation: float 12s ease-in-out infinite reverse; }
+    .orb-3 { animation: float 10s ease-in-out 2s infinite; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STICKY NAV
+═══════════════════════════════════════════════════════════ -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500" style="background:transparent">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 lg:h-20">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-xl btn-primary flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-leaf text-white text-sm"></i>
+        </div>
+        <span class="font-display font-800 text-xl tracking-tight text-white">Fresh<span class="text-mint">Sense</span></span>
+      </a>
+
+      <!-- Desktop links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#sdg"      class="text-sm text-muted hover:text-mint transition-colors duration-200 font-medium">SDGs</a>
+        <a href="#product"  class="text-sm text-muted hover:text-mint transition-colors duration-200 font-medium">Product</a>
+        <a href="#roi"      class="text-sm text-muted hover:text-mint transition-colors duration-200 font-medium">ROI Calculator</a>
+        <a href="#timeline" class="text-sm text-muted hover:text-mint transition-colors duration-200 font-medium">Journey</a>
+        <a href="#contact"  class="btn-primary text-white text-sm font-semibold px-5 py-2 rounded-full">Get Started</a>
+      </div>
+
+      <!-- Mobile hamburger -->
+      <button id="menuToggle" class="md:hidden text-white p-2" aria-label="Menu">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="hidden md:hidden glass mx-4 mt-2 rounded-2xl overflow-hidden">
+    <div class="flex flex-col p-4 gap-3">
+      <a href="#sdg"      class="text-sm text-cream/80 hover:text-mint py-2 px-3 rounded-lg hover:bg-white/5 transition-all" onclick="closeMobileMenu()">SDGs</a>
+      <a href="#product"  class="text-sm text-cream/80 hover:text-mint py-2 px-3 rounded-lg hover:bg-white/5 transition-all" onclick="closeMobileMenu()">Product</a>
+      <a href="#roi"      class="text-sm text-cream/80 hover:text-mint py-2 px-3 rounded-lg hover:bg-white/5 transition-all" onclick="closeMobileMenu()">ROI Calculator</a>
+      <a href="#timeline" class="text-sm text-cream/80 hover:text-mint py-2 px-3 rounded-lg hover:bg-white/5 transition-all" onclick="closeMobileMenu()">Journey</a>
+      <a href="#contact"  class="btn-primary text-white text-sm font-semibold px-4 py-2 rounded-xl text-center mt-1" onclick="closeMobileMenu()">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO SECTION
+     JS hooks: #impact-counter (live food-saved ticker)
+               #sensor-indicator (animated sensor state)
+═══════════════════════════════════════════════════════════ -->
+<section id="hero" class="relative min-h-screen flex flex-col justify-center overflow-hidden hero-bg">
+
+  <!-- Grid overlay -->
+  <div class="hero-grid absolute inset-0 z-0 opacity-60"></div>
+
+  <!-- Floating orbs -->
+  <div class="orb orb-1 w-96 h-96 bg-mint/10 top-10 -left-20"></div>
+  <div class="orb orb-2 w-72 h-72 bg-navyL/40 bottom-20 right-0"></div>
+  <div class="orb orb-3 w-64 h-64 bg-mint/8 top-1/2 right-1/4"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- ── Left copy ── -->
+      <div>
+        <div class="section-label mb-5 reveal">Sustainable Tech Innovation · Egypt</div>
+
+        <h1 class="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.1] text-white mb-6 reveal" style="transition-delay:0.1s">
+          FreshSense:<br/>
+          <span class="text-mint">Intelligent</span><br/>
+          Freshness,<br/>
+          Zero Waste.
+        </h1>
+
+        <p class="text-cream/70 text-lg leading-relaxed max-w-md mb-8 reveal" style="transition-delay:0.2s">
+          A biodegradable smart sticker system powered by plant-based chromatic inks — transforming how Egypt tracks freshness and fights food loss, aligned with UN SDGs 2, 12 &amp; 13.
+        </p>
+
+        <div class="flex flex-wrap gap-4 mb-12 reveal" style="transition-delay:0.3s">
+          <a href="#roi"     class="btn-primary text-white font-semibold px-7 py-3.5 rounded-full text-sm shadow-xl flex items-center gap-2">
+            <i class="fa-solid fa-calculator"></i> Calculate Your Savings
+          </a>
+          <a href="#product" class="btn-outline font-semibold px-7 py-3.5 rounded-full text-sm flex items-center gap-2">
+            <i class="fa-solid fa-play-circle"></i> Explore Product
+          </a>
+        </div>
+
+        <!-- SDG badge row -->
+        <div class="flex items-center gap-3 reveal" style="transition-delay:0.4s">
+          <span class="text-xs text-muted font-medium">Aligned with</span>
+          <div class="flex gap-2">
+            <span class="bg-[#DDA63A]/20 text-[#DDA63A] text-xs font-bold px-3 py-1.5 rounded-full border border-[#DDA63A]/30">SDG 2</span>
+            <span class="bg-[#BF8B2E]/20 text-[#D4A017] text-xs font-bold px-3 py-1.5 rounded-full border border-[#D4A017]/30">SDG 12</span>
+            <span class="bg-[#3F7E44]/20 text-[#4CAF50] text-xs font-bold px-3 py-1.5 rounded-full border border-[#4CAF50]/30">SDG 13</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Right panel: Sensor + Counter ── -->
+      <div class="flex flex-col gap-6 reveal-right" style="transition-delay:0.2s">
+
+        <!-- Live sensor demo card -->
+        <div class="glass rounded-3xl p-7 relative overflow-hidden">
+          <div class="section-label mb-4">Live Sensor Simulation</div>
+
+          <!-- Sensor visual — JS toggles classes to animate color state -->
+          <div id="sensor-indicator" class="flex items-center gap-5 mb-6">
+            <div class="relative flex-shrink-0">
+              <div id="sensorDot" class="sensor-dot w-16 h-16 rounded-full sticker-demo flex items-center justify-center pulse-ring relative z-10">
+                <i class="fa-solid fa-droplet text-white text-2xl drop-shadow-lg"></i>
+              </div>
+            </div>
+            <div>
+              <div id="sensorLabel" class="font-display font-bold text-lg text-white mb-1">FRESH</div>
+              <div id="sensorDesc"  class="text-cream/60 text-sm">Chromatic ink: Vibrant Green — all compounds nominal</div>
+              <div class="flex gap-2 mt-3">
+                <div id="s1" class="w-3 h-3 rounded-full bg-mint transition-all duration-700"></div>
+                <div id="s2" class="w-3 h-3 rounded-full bg-white/20 transition-all duration-700"></div>
+                <div id="s3" class="w-3 h-3 rounded-full bg-white/20 transition-all duration-700"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- State buttons -->
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="setSensor('fresh')"    class="text-xs px-3 py-1.5 rounded-full border border-mint/40 text-mint hover:bg-mint/10 transition-all duration-200">🟢 Fresh</button>
+            <button onclick="setSensor('caution')"  class="text-xs px-3 py-1.5 rounded-full border border-yellow-400/40 text-yellow-400 hover:bg-yellow-400/10 transition-all duration-200">🟡 Use Soon</button>
+            <button onclick="setSensor('expired')"  class="text-xs px-3 py-1.5 rounded-full border border-red-400/40 text-red-400 hover:bg-red-400/10 transition-all duration-200">🔴 Expired</button>
+          </div>
+        </div>
+
+        <!-- Live Impact Counter — increments every second via JS -->
+        <div class="glass-light rounded-3xl p-7 border border-mint/10">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="section-label mb-1">Global Live Impact</div>
+              <div class="font-display font-extrabold text-4xl lg:text-5xl text-white tracking-tight" id="impact-counter">0</div>
+              <div class="text-cream/60 text-sm mt-1">Kilograms of food saved globally</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-mint/15 border border-mint/25 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-earth-africa text-mint text-lg"></i>
+            </div>
+          </div>
+          <div class="h-1.5 bg-white/8 rounded-full mt-4 overflow-hidden">
+            <div id="impact-bar" class="h-full bg-gradient-to-r from-mint to-mintD rounded-full transition-all duration-1000" style="width:12%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-muted mt-2">
+            <span>0 kg</span><span>Daily Target: 50,000 kg</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom fade -->
+  <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-navyD pointer-events-none"></div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SDG ALIGNMENT MATRIX
+     JS hook: toggleSDG(id) — expands detail panels on click
+═══════════════════════════════════════════════════════════ -->
+<section id="sdg" class="relative py-24 lg:py-32 bg-navyD">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center mb-16 reveal">
+      <div class="section-label mb-4">UN Sustainable Development Goals</div>
+      <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-5">
+        Our SDG Alignment<br/><span class="text-mint">Matrix</span>
+      </h2>
+      <p class="text-cream/60 max-w-xl mx-auto text-lg">
+        Click each goal to reveal FreshSense's specific local Egyptian initiatives and partnerships.
+      </p>
+    </div>
+
+    <!-- SDG Grid -->
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <!-- SDG 2 — Zero Hunger -->
+      <div id="sdg-2" class="sdg-card glass rounded-3xl p-7 cursor-pointer" onclick="toggleSDG(2)">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-display font-extrabold"
+               style="background:linear-gradient(135deg,#DDA63A,#b8882e); color:#fff">2</div>
+          <i id="sdg-2-icon" class="fa-solid fa-chevron-down text-muted text-sm mt-2 transition-transform duration-300"></i>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#DDA63A]/15 border border-[#DDA63A]/25 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-wheat-awn text-[#DDA63A]"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Zero Hunger</h3>
+        <p class="text-cream/55 text-sm leading-relaxed">Reducing post-harvest losses to enhance food security across Egypt's supply chain.</p>
+
+        <div id="sdg-2-detail" class="sdg-detail">
+          <div class="border-t border-white/10 pt-4">
+            <div class="flex flex-col gap-3">
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-handshake text-[#DDA63A] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">Egyptian Food Bank</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">Joint pilot to tag 50,000 food parcels monthly, reducing spoilage by an estimated 18% and redirecting saved food to food-insecure communities.</p>
+              </div>
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-building-columns text-[#DDA63A] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">Ministry of Agriculture</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">Collaboration with MALR to deploy FreshSense in Minya and Luxor cold-chain hubs, targeting 40% reduction in transit spoilage.</p>
+              </div>
+              <div class="flex gap-2 mt-1">
+                <span class="text-xs bg-[#DDA63A]/15 text-[#DDA63A] px-3 py-1 rounded-full border border-[#DDA63A]/25">~12,000 families</span>
+                <span class="text-xs bg-[#DDA63A]/15 text-[#DDA63A] px-3 py-1 rounded-full border border-[#DDA63A]/25">Upper Egypt</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SDG 12 — Responsible Consumption -->
+      <div id="sdg-12" class="sdg-card glass rounded-3xl p-7 cursor-pointer" onclick="toggleSDG(12)">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-display font-extrabold"
+               style="background:linear-gradient(135deg,#BF8B2E,#9a6e22); color:#fff">12</div>
+          <i id="sdg-12-icon" class="fa-solid fa-chevron-down text-muted text-sm mt-2 transition-transform duration-300"></i>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#D4A017]/15 border border-[#D4A017]/25 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-recycle text-[#D4A017]"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Responsible Consumption</h3>
+        <p class="text-cream/55 text-sm leading-relaxed">Empowering consumers and retailers to make data-driven purchasing and stocking decisions.</p>
+
+        <div id="sdg-12-detail" class="sdg-detail">
+          <div class="border-t border-white/10 pt-4">
+            <div class="flex flex-col gap-3">
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-shield-halved text-[#D4A017] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">National Food Safety Authority</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">FreshSense complies with NFSA Decree 83/2019; working with NFSA to formalize smart indicator standards for regulated fresh produce categories.</p>
+              </div>
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-store text-[#D4A017] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">Hypermarket Pilots</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">Active MoU negotiations with Seoudi, Spinneys, and Rabbit for Q3 2025 rollout. Projected 22% reduction in on-shelf spoilage write-offs.</p>
+              </div>
+              <div class="flex gap-2 mt-1">
+                <span class="text-xs bg-[#D4A017]/15 text-[#D4A017] px-3 py-1 rounded-full border border-[#D4A017]/25">3 Retailers</span>
+                <span class="text-xs bg-[#D4A017]/15 text-[#D4A017] px-3 py-1 rounded-full border border-[#D4A017]/25">Cairo &amp; Alex</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SDG 13 — Climate Action -->
+      <div id="sdg-13" class="sdg-card glass rounded-3xl p-7 cursor-pointer" onclick="toggleSDG(13)">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-display font-extrabold"
+               style="background:linear-gradient(135deg,#3F7E44,#2d5c32); color:#fff">13</div>
+          <i id="sdg-13-icon" class="fa-solid fa-chevron-down text-muted text-sm mt-2 transition-transform duration-300"></i>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#4CAF50]/15 border border-[#4CAF50]/25 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-earth-africa text-[#4CAF50]"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Climate Action</h3>
+        <p class="text-cream/55 text-sm leading-relaxed">Cutting methane emissions from landfills by preventing organic food from ever reaching them.</p>
+
+        <div id="sdg-13-detail" class="sdg-detail">
+          <div class="border-t border-white/10 pt-4">
+            <div class="flex flex-col gap-3">
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-leaf text-[#4CAF50] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">Egypt's NDC 2030 Alignment</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">FreshSense targets 85,000 tonnes of CO₂-eq annual reduction — contributing to Egypt's Nationally Determined Contribution of 10% emissions cut from the waste sector.</p>
+              </div>
+              <div class="glass-light rounded-xl p-3.5">
+                <div class="flex items-center gap-3 mb-1.5">
+                  <i class="fa-solid fa-flask text-[#4CAF50] text-sm"></i>
+                  <span class="font-semibold text-white text-sm">AUC Chemistry Dept.</span>
+                </div>
+                <p class="text-cream/55 text-xs leading-relaxed">R&amp;D partnership with AUC to develop Egypt-specific plant-based inks using locally sourced anthocyanin from purple sweet potato cultivars grown in the Nile Delta.</p>
+              </div>
+              <div class="flex gap-2 mt-1">
+                <span class="text-xs bg-[#4CAF50]/15 text-[#4CAF50] px-3 py-1 rounded-full border border-[#4CAF50]/30">85k t CO₂-eq</span>
+                <span class="text-xs bg-[#4CAF50]/15 text-[#4CAF50] px-3 py-1 rounded-full border border-[#4CAF50]/30">Annually</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PRODUCT ANATOMY — THREE-TIER TABBED WIDGET
+     JS hooks: switchTab(id) toggles .active class on tabs/panels
+═══════════════════════════════════════════════════════════ -->
+<section id="product" class="relative py-24 lg:py-32" style="background:linear-gradient(160deg,#002244 0%,#001530 100%)">
+
+  <!-- Decorative orb -->
+  <div class="orb w-80 h-80 bg-mint/8 bottom-0 right-0 pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+    <div class="text-center mb-14 reveal">
+      <div class="section-label mb-4">Product Architecture</div>
+      <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
+        The Three-Tier<br/><span class="text-mint">Anatomy</span>
+      </h2>
+      <p class="text-cream/60 max-w-xl mx-auto">Explore every layer of the FreshSense product ecosystem — from economic core to digital augmentation.</p>
+    </div>
+
+    <!-- Tab navigation -->
+    <div class="flex justify-center mb-10 reveal">
+      <div class="glass rounded-2xl p-1.5 flex gap-1">
+        <button id="tab-btn-core"      onclick="switchTab('core')"      class="tab-btn active text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 text-white">
+          <i class="fa-solid fa-coins mr-2 text-mint"></i>Core
+        </button>
+        <button id="tab-btn-actual"    onclick="switchTab('actual')"    class="tab-btn text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 text-cream/60 hover:text-white">
+          <i class="fa-solid fa-tag mr-2"></i>Actual
+        </button>
+        <button id="tab-btn-augmented" onclick="switchTab('augmented')" class="tab-btn text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 text-cream/60 hover:text-white">
+          <i class="fa-solid fa-mobile-screen mr-2"></i>Augmented
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab panels -->
+    <div class="reveal" style="transition-delay:0.1s">
+
+      <!-- CORE PRODUCT -->
+      <div id="tab-core" class="tab-content active">
+        <div class="grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div class="section-label mb-4 text-yellow-400">Core Product</div>
+            <h3 class="font-display font-bold text-3xl lg:text-4xl text-white mb-5">
+              Economic Value &amp;<br/>Household Savings
+            </h3>
+            <p class="text-cream/65 leading-relaxed mb-7">The fundamental benefit FreshSense delivers: eliminating the hidden tax of food waste. Egyptian households waste an average of <strong class="text-white">EGP 3,200/year</strong> on food that spoils before consumption. FreshSense turns every grocery purchase into a confident, data-backed decision.</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="glass-light rounded-2xl p-5 border border-yellow-400/10">
+                <div class="text-2xl font-display font-extrabold text-yellow-400 mb-1">28%</div>
+                <div class="text-cream/55 text-sm">Average household savings on grocery waste</div>
+              </div>
+              <div class="glass-light rounded-2xl p-5 border border-mint/10">
+                <div class="text-2xl font-display font-extrabold text-mint mb-1">EGP 900</div>
+                <div class="text-cream/55 text-sm">Average annual saving per household</div>
+              </div>
+              <div class="glass-light rounded-2xl p-5 border border-blue-400/10">
+                <div class="text-2xl font-display font-extrabold text-blue-300 mb-1">3.2M</div>
+                <div class="text-cream/55 text-sm">Target Cairo households by 2026</div>
+              </div>
+              <div class="glass-light rounded-2xl p-5 border border-pink-400/10">
+                <div class="text-2xl font-display font-extrabold text-pink-300 mb-1">B2B2C</div>
+                <div class="text-cream/55 text-sm">Retailer → Consumer value chain</div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center">
+            <div class="relative w-72 h-72">
+              <div class="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-transparent blur-2xl"></div>
+              <div class="relative z-10 w-full h-full glass rounded-3xl p-8 flex flex-col justify-center items-center gap-4">
+                <i class="fa-solid fa-piggy-bank text-yellow-400 text-5xl mb-2"></i>
+                <div class="text-center">
+                  <div class="font-display font-extrabold text-4xl text-white">EGP 900</div>
+                  <div class="text-cream/60 text-sm mt-1">Saved per family annually</div>
+                </div>
+                <div class="w-full bg-white/10 rounded-full h-2 mt-2">
+                  <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full" style="width:72%"></div>
+                </div>
+                <div class="text-xs text-muted">72% of food waste is preventable</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTUAL PRODUCT -->
+      <div id="tab-actual" class="tab-content">
+        <div class="grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div class="section-label mb-4 text-mint">Actual Product</div>
+            <h3 class="font-display font-bold text-3xl lg:text-4xl text-white mb-5">
+              Biodegradable Smart<br/>Chromatic Sticker
+            </h3>
+            <p class="text-cream/65 leading-relaxed mb-7">A 3×3 cm sticker that <em>speaks</em> freshness. Our non-toxic, plant-based smart inks react to the chemical byproducts of food degradation (volatile organic compounds, pH shifts, and microbial activity) — changing color visibly without any battery or electronics.</p>
+
+            <div class="flex flex-col gap-3">
+              <div class="flex items-start gap-4 glass-light rounded-2xl p-4">
+                <div class="w-9 h-9 rounded-xl bg-mint/20 flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid fa-leaf text-mint text-sm"></i>
+                </div>
+                <div>
+                  <div class="font-semibold text-white text-sm mb-1">100% Plant-Based Inks</div>
+                  <div class="text-cream/55 text-xs">Anthocyanin from purple sweet potato; curcumin from local turmeric — fully GRAS-certified.</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 glass-light rounded-2xl p-4">
+                <div class="w-9 h-9 rounded-xl bg-blue-400/20 flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid fa-recycle text-blue-300 text-sm"></i>
+                </div>
+                <div>
+                  <div class="font-semibold text-white text-sm mb-1">Fully Biodegradable Substrate</div>
+                  <div class="text-cream/55 text-xs">Cellulose-based backing decomposes in 28 days in standard compost — zero microplastic contamination.</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 glass-light rounded-2xl p-4">
+                <div class="w-9 h-9 rounded-xl bg-yellow-400/20 flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid fa-palette text-yellow-400 text-sm"></i>
+                </div>
+                <div>
+                  <div class="font-semibold text-white text-sm mb-1">Three-State Visual Language</div>
+                  <div class="text-cream/55 text-xs">Green (Fresh) → Yellow (Use Soon, within 24h) → Red (Discard). No app needed for basic readings.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sticker graphic -->
+          <div class="flex justify-center">
+            <div class="relative">
+              <div class="absolute -inset-6 rounded-full bg-mint/10 blur-3xl"></div>
+              <div class="relative z-10 flex flex-col items-center gap-4">
+                <div class="text-xs text-muted uppercase tracking-widest mb-2">Tap to simulate state →</div>
+                <div class="flex gap-5 items-end">
+                  <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="setSensor('fresh')">
+                    <div class="w-16 h-20 rounded-2xl shadow-2xl group-hover:scale-110 transition-all duration-300" style="background:linear-gradient(135deg,#11CAA0,#0da882)">
+                      <div class="w-full h-full flex items-center justify-center">
+                        <i class="fa-solid fa-droplet text-white text-2xl"></i>
+                      </div>
+                    </div>
+                    <span class="text-xs text-mint font-semibold">FRESH</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="setSensor('caution')">
+                    <div class="w-20 h-24 rounded-2xl shadow-2xl group-hover:scale-110 transition-all duration-300" style="background:linear-gradient(135deg,#f0c040,#d4a020)">
+                      <div class="w-full h-full flex items-center justify-center">
+                        <i class="fa-solid fa-clock text-white text-2xl"></i>
+                      </div>
+                    </div>
+                    <span class="text-xs text-yellow-400 font-semibold">USE SOON</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="setSensor('expired')">
+                    <div class="w-16 h-20 rounded-2xl shadow-2xl group-hover:scale-110 transition-all duration-300" style="background:linear-gradient(135deg,#e05050,#c03030)">
+                      <div class="w-full h-full flex items-center justify-center">
+                        <i class="fa-solid fa-triangle-exclamation text-white text-2xl"></i>
+                      </div>
+                    </div>
+                    <span class="text-xs text-red-400 font-semibold">EXPIRED</span>
+                  </div>
+                </div>
+                <div class="glass rounded-2xl px-5 py-3 text-xs text-cream/60 text-center max-w-xs mt-2">
+                  Real sticker changes color via electrochemical reaction — no power required
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUGMENTED PRODUCT -->
+      <div id="tab-augmented" class="tab-content">
+        <div class="grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div class="section-label mb-4 text-purple-400">Augmented Product</div>
+            <h3 class="font-display font-bold text-3xl lg:text-4xl text-white mb-5">
+              Gamified Mobile<br/>App Ecosystem
+            </h3>
+            <p class="text-cream/65 leading-relaxed mb-7">The FreshSense app transforms sustainable behaviour into a rewarding daily habit. Scan any sticker for real-time data, earn GreenPoints for zero-waste weeks, and redeem rewards at partner supermarkets — closing the loop between hardware and habit.</p>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="glass-light rounded-2xl p-4 border border-purple-400/15">
+                <i class="fa-solid fa-qrcode text-purple-400 text-xl mb-3"></i>
+                <div class="font-semibold text-white text-sm mb-1">Smart Scan</div>
+                <div class="text-cream/55 text-xs">Scan sticker QR for detailed freshness report & product provenance.</div>
+              </div>
+              <div class="glass-light rounded-2xl p-4 border border-mint/15">
+                <i class="fa-solid fa-trophy text-mint text-xl mb-3"></i>
+                <div class="font-semibold text-white text-sm mb-1">GreenPoints</div>
+                <div class="text-cream/55 text-xs">Earn 10pts per meal saved. Redeem at Seoudi, Spinneys, Rabbit.</div>
+              </div>
+              <div class="glass-light rounded-2xl p-4 border border-blue-400/15">
+                <i class="fa-solid fa-chart-line text-blue-300 text-xl mb-3"></i>
+                <div class="font-semibold text-white text-sm mb-1">Waste Dashboard</div>
+                <div class="text-cream/55 text-xs">Weekly household analytics: waste rate, money saved, CO₂ impact.</div>
+              </div>
+              <div class="glass-light rounded-2xl p-4 border border-pink-400/15">
+                <i class="fa-solid fa-users text-pink-300 text-xl mb-3"></i>
+                <div class="font-semibold text-white text-sm mb-1">Community Leagues</div>
+                <div class="text-cream/55 text-xs">Neighbourhood rankings. Compete and win monthly sustainability prizes.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- App mockup -->
+          <div class="flex justify-center">
+            <div class="relative">
+              <div class="absolute -inset-8 bg-purple-600/10 blur-3xl rounded-full"></div>
+              <div class="relative z-10 w-56 glass rounded-3xl p-5 border border-purple-400/20">
+                <!-- Status bar -->
+                <div class="flex justify-between items-center mb-4 text-xs text-cream/40">
+                  <span>9:41</span><span>●●●</span>
+                </div>
+                <!-- App header -->
+                <div class="flex items-center gap-2 mb-5">
+                  <div class="w-7 h-7 rounded-lg bg-mint flex items-center justify-center">
+                    <i class="fa-solid fa-leaf text-white text-xs"></i>
+                  </div>
+                  <span class="font-display font-bold text-white text-sm">FreshSense</span>
+                </div>
+                <!-- Green score -->
+                <div class="bg-mint/15 rounded-2xl p-4 mb-4 border border-mint/20">
+                  <div class="text-xs text-muted mb-1">GreenPoints</div>
+                  <div class="font-display font-extrabold text-2xl text-mint">2,840</div>
+                  <div class="flex gap-1 mt-2">
+                    <div class="h-1.5 bg-mint rounded-full flex-1"></div>
+                    <div class="h-1.5 bg-mint rounded-full flex-1"></div>
+                    <div class="h-1.5 bg-mint rounded-full flex-1"></div>
+                    <div class="h-1.5 bg-white/20 rounded-full flex-1"></div>
+                  </div>
+                  <div class="text-xs text-muted mt-1">1,160 pts to Silver</div>
+                </div>
+                <!-- Items list -->
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-lg bg-mint/20 flex items-center justify-center">
+                        <i class="fa-solid fa-apple-whole text-mint text-xs"></i>
+                      </div>
+                      <span class="text-xs text-cream/70">Apples ×6</span>
+                    </div>
+                    <span class="text-xs text-mint">🟢</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-lg bg-yellow-400/20 flex items-center justify-center">
+                        <i class="fa-solid fa-egg text-yellow-400 text-xs"></i>
+                      </div>
+                      <span class="text-xs text-cream/70">Eggs ×12</span>
+                    </div>
+                    <span class="text-xs text-yellow-400">🟡</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-lg bg-red-400/20 flex items-center justify-center">
+                        <i class="fa-solid fa-fish text-red-400 text-xs"></i>
+                      </div>
+                      <span class="text-xs text-cream/70">Fish fillet</span>
+                    </div>
+                    <span class="text-xs text-red-400">🔴</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     ROI CALCULATOR
+     JS hooks: #roi-slider → #roi-money, #roi-co2, #roi-meals
+              updateROI() recalculates on every input event
+═══════════════════════════════════════════════════════════ -->
+<section id="roi" class="relative py-24 lg:py-32 bg-navyD">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center mb-14 reveal">
+      <div class="section-label mb-4">Interactive Calculator</div>
+      <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
+        Your Personal<br/><span class="text-mint">Impact Calculator</span>
+      </h2>
+      <p class="text-cream/60 max-w-lg mx-auto">Drag the slider to match your monthly grocery spend and instantly see your projected savings.</p>
+    </div>
+
+    <div class="glass rounded-3xl p-8 lg:p-12 reveal">
+
+      <!-- Slider input -->
+      <div class="mb-10">
+        <div class="flex justify-between items-end mb-4">
+          <label class="font-semibold text-white">Monthly Grocery Spend</label>
+          <div class="text-right">
+            <span class="font-display font-extrabold text-3xl text-mint" id="roi-spend-display">3,000</span>
+            <span class="text-muted text-sm ml-1">EGP/month</span>
+          </div>
+        </div>
+        <input type="range" id="roi-slider" min="500" max="15000" step="100" value="3000"
+               oninput="updateROI(this.value)" class="w-full" />
+        <div class="flex justify-between text-xs text-muted mt-2">
+          <span>EGP 500</span><span>EGP 15,000</span>
+        </div>
+      </div>
+
+      <!-- Results grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+        <div class="card-cream rounded-2xl p-6 text-center">
+          <div class="w-12 h-12 rounded-xl bg-navy/10 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-wallet text-navy text-xl"></i>
+          </div>
+          <div class="section-label text-navy/50 mb-1">Money Saved</div>
+          <div class="font-display font-extrabold text-3xl text-navy" id="roi-money">756</div>
+          <div class="text-navy/50 text-sm mt-1">EGP per month</div>
+          <div class="text-xs text-mint font-semibold mt-2 bg-mint/10 rounded-full px-3 py-1 inline-block">
+            <span id="roi-money-annual">9,072</span> EGP / year
+          </div>
+        </div>
+
+        <div class="card-cream rounded-2xl p-6 text-center">
+          <div class="w-12 h-12 rounded-xl bg-green-500/15 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-cloud text-green-600 text-xl"></i>
+          </div>
+          <div class="section-label text-navy/50 mb-1">CO₂ Avoided</div>
+          <div class="font-display font-extrabold text-3xl text-navy" id="roi-co2">18.6</div>
+          <div class="text-navy/50 text-sm mt-1">kg CO₂ per month</div>
+          <div class="text-xs text-green-600 font-semibold mt-2 bg-green-500/10 rounded-full px-3 py-1 inline-block">
+            <span id="roi-co2-annual">223</span> kg / year
+          </div>
+        </div>
+
+        <div class="card-cream rounded-2xl p-6 text-center">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-utensils text-blue-600 text-xl"></i>
+          </div>
+          <div class="section-label text-navy/50 mb-1">Meals Saved</div>
+          <div class="font-display font-extrabold text-3xl text-navy" id="roi-meals">19</div>
+          <div class="text-navy/50 text-sm mt-1">meals per month</div>
+          <div class="text-xs text-blue-600 font-semibold mt-2 bg-blue-500/10 rounded-full px-3 py-1 inline-block">
+            <span id="roi-meals-annual">228</span> meals / year
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Assumption footnote -->
+      <p class="text-center text-muted text-xs mt-6">
+        Based on: 25.2% avg. household food waste rate (FAO Egypt 2023) · 0.62 kg CO₂/kg food · EGP 40 average meal cost
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOCAL ECOSYSTEM JOURNEY — VERTICAL TIMELINE
+     (NPD Process & Supply Chain)
+═══════════════════════════════════════════════════════════ -->
+<section id="timeline" class="relative py-24 lg:py-32" style="background:linear-gradient(180deg,#001530,#002244)">
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+    <div class="text-center mb-16 reveal">
+      <div class="section-label mb-4">New Product Development</div>
+      <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
+        The Local<br/><span class="text-mint">Ecosystem Journey</span>
+      </h2>
+      <p class="text-cream/60 max-w-xl mx-auto">From Nile Delta soil to supermarket shelf — Egypt's fully local smart freshness supply chain.</p>
+    </div>
+
+    <!-- Timeline -->
+    <div class="relative">
+      <!-- Vertical line -->
+      <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5 timeline-line transform md:-translate-x-0.5"></div>
+
+      <!-- Item 1 -->
+      <div class="timeline-item relative flex md:flex-row flex-col mb-12 reveal" style="transition-delay:0s">
+        <div class="md:w-1/2 md:pr-12 md:text-right mb-4 md:mb-0 pl-16 md:pl-0">
+          <div class="section-label text-mint mb-2">Phase 01 · Research</div>
+          <h4 class="font-display font-bold text-xl text-white mb-2">Ink R&amp;D at AUC</h4>
+          <p class="text-cream/55 text-sm leading-relaxed">American University in Cairo's Chemistry Dept. isolates anthocyanin pigments from Delta-grown purple sweet potato and curcumin from Fayoum turmeric — creating Egypt's first food-safe smart-ink portfolio.</p>
+        </div>
+        <div class="absolute left-0 md:left-1/2 top-1 md:top-1/2 md:-translate-y-1/2 md:-translate-x-1/2">
+          <div class="timeline-dot w-12 h-12 rounded-full bg-mint flex items-center justify-center shadow-lg transition-all duration-300 border-4 border-navyD">
+            <i class="fa-solid fa-flask text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 pl-16">
+          <div class="glass-light rounded-2xl p-4 text-sm text-cream/60 border border-mint/10">
+            <strong class="text-white">Partner:</strong> AUC Chemistry &amp; Materials Science<br/>
+            <strong class="text-white">Timeline:</strong> Q1–Q2 2024<br/>
+            <strong class="text-white">Output:</strong> 3 patent-pending ink formulas
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2 -->
+      <div class="timeline-item relative flex md:flex-row flex-col mb-12 reveal" style="transition-delay:0.1s">
+        <div class="md:w-1/2 md:pr-12 md:text-right mb-4 md:mb-0 pl-16 md:pl-0 md:order-1">
+          <div class="glass-light rounded-2xl p-4 text-sm text-cream/60 border border-blue-300/10">
+            <strong class="text-white">Partner:</strong> Sakr Paper Industries, 10th of Ramadan City<br/>
+            <strong class="text-white">Timeline:</strong> Q3 2024<br/>
+            <strong class="text-white">Output:</strong> 500k substrate units/month capacity
+          </div>
+        </div>
+        <div class="absolute left-0 md:left-1/2 top-1 md:top-1/2 md:-translate-y-1/2 md:-translate-x-1/2 md:order-2">
+          <div class="timeline-dot w-12 h-12 rounded-full bg-blue-400 flex items-center justify-center shadow-lg transition-all duration-300 border-4 border-navyD">
+            <i class="fa-solid fa-industry text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 pl-16 md:order-3">
+          <div class="section-label text-blue-300 mb-2">Phase 02 · Manufacturing</div>
+          <h4 class="font-display font-bold text-xl text-white mb-2">Local Substrate Production</h4>
+          <p class="text-cream/55 text-sm leading-relaxed">Biodegradable cellulose substrates manufactured at 10th of Ramadan City industrial zone. FSC-certified paper sourced from Nile Pulp &amp; Paper. Ink-coating with our proprietary slot-die process.</p>
+        </div>
+      </div>
+
+      <!-- Item 3 -->
+      <div class="timeline-item relative flex md:flex-row flex-col mb-12 reveal" style="transition-delay:0.2s">
+        <div class="md:w-1/2 md:pr-12 md:text-right mb-4 md:mb-0 pl-16 md:pl-0">
+          <div class="section-label text-yellow-400 mb-2">Phase 03 · Regulatory</div>
+          <h4 class="font-display font-bold text-xl text-white mb-2">NFSA Certification</h4>
+          <p class="text-cream/55 text-sm leading-relaxed">Full registration under National Food Safety Authority Decree 83/2019. All ink components verified food-contact safe. Halal certification from HEIA. ISO 22000 audit passed for manufacturing site.</p>
+        </div>
+        <div class="absolute left-0 md:left-1/2 top-1 md:top-1/2 md:-translate-y-1/2 md:-translate-x-1/2">
+          <div class="timeline-dot w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg transition-all duration-300 border-4 border-navyD">
+            <i class="fa-solid fa-certificate text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 pl-16">
+          <div class="glass-light rounded-2xl p-4 text-sm text-cream/60 border border-yellow-400/10">
+            <strong class="text-white">Authority:</strong> NFSA + HEIA + ITIDA<br/>
+            <strong class="text-white">Timeline:</strong> Q4 2024<br/>
+            <strong class="text-white">Output:</strong> Full regulatory green-light
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 4 -->
+      <div class="timeline-item relative flex md:flex-row flex-col mb-12 reveal" style="transition-delay:0.3s">
+        <div class="md:w-1/2 md:pr-12 md:text-right mb-4 md:mb-0 pl-16 md:pl-0 md:order-1">
+          <div class="glass-light rounded-2xl p-4 text-sm text-cream/60 border border-mint/10">
+            <strong class="text-white">Partners:</strong> Seoudi Market, Spinneys Egypt, Rabbit<br/>
+            <strong class="text-white">Timeline:</strong> Q1–Q2 2025<br/>
+            <strong class="text-white">Scale:</strong> 12 pilot stores, Cairo &amp; Alexandria
+          </div>
+        </div>
+        <div class="absolute left-0 md:left-1/2 top-1 md:top-1/2 md:-translate-y-1/2 md:-translate-x-1/2 md:order-2">
+          <div class="timeline-dot w-12 h-12 rounded-full bg-mint flex items-center justify-center shadow-lg transition-all duration-300 border-4 border-navyD">
+            <i class="fa-solid fa-store text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 pl-16 md:order-3">
+          <div class="section-label text-mint mb-2">Phase 04 · Pilot</div>
+          <h4 class="font-display font-bold text-xl text-white mb-2">Hypermarket Pilot Launch</h4>
+          <p class="text-cream/55 text-sm leading-relaxed">Live pilot across 12 Cairo and Alexandria hypermarket locations. Tagged product categories: deli meats, fresh dairy, seafood, and bakery. Real-time data dashboards for store managers via FreshSense Enterprise portal.</p>
+        </div>
+      </div>
+
+      <!-- Item 5 -->
+      <div class="timeline-item relative flex md:flex-row flex-col reveal" style="transition-delay:0.4s">
+        <div class="md:w-1/2 md:pr-12 md:text-right mb-4 md:mb-0 pl-16 md:pl-0">
+          <div class="section-label text-purple-400 mb-2">Phase 05 · Scale</div>
+          <h4 class="font-display font-bold text-xl text-white mb-2">National Rollout &amp; Export</h4>
+          <p class="text-cream/55 text-sm leading-relaxed">Full national rollout targeting 500+ retail points. Export pipeline to GCC markets (UAE, KSA) via Egypt's existing trade corridors. B2B licensing to regional food manufacturers.</p>
+        </div>
+        <div class="absolute left-0 md:left-1/2 top-1 md:top-1/2 md:-translate-y-1/2 md:-translate-x-1/2">
+          <div class="timeline-dot w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center shadow-lg transition-all duration-300 border-4 border-navyD">
+            <i class="fa-solid fa-rocket text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="md:w-1/2 md:pl-12 pl-16">
+          <div class="glass-light rounded-2xl p-4 text-sm text-cream/60 border border-purple-400/10">
+            <strong class="text-white">Timeline:</strong> Q3 2025 – Q2 2026<br/>
+            <strong class="text-white">Target:</strong> 500 retail points · 3M households<br/>
+            <strong class="text-white">Export:</strong> UAE, KSA, Morocco
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     STATS BAND
+═══════════════════════════════════════════════════════════ -->
+<section class="py-16 bg-navy relative overflow-hidden">
+  <div class="absolute inset-0 hero-grid opacity-30"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div class="reveal">
+        <div class="font-display font-extrabold text-4xl text-mint mb-1">32%</div>
+        <div class="text-cream/55 text-sm">Egypt's food lost post-harvest</div>
+      </div>
+      <div class="reveal" style="transition-delay:0.1s">
+        <div class="font-display font-extrabold text-4xl text-white mb-1">EGP 87B</div>
+        <div class="text-cream/55 text-sm">Annual food waste value in Egypt</div>
+      </div>
+      <div class="reveal" style="transition-delay:0.2s">
+        <div class="font-display font-extrabold text-4xl text-mint mb-1">0.5¢</div>
+        <div class="text-cream/55 text-sm">Cost per FreshSense sticker</div>
+      </div>
+      <div class="reveal" style="transition-delay:0.3s">
+        <div class="font-display font-extrabold text-4xl text-white mb-1">28 days</div>
+        <div class="text-cream/55 text-sm">Compost breakdown time</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CTA / CONTACT SECTION
+═══════════════════════════════════════════════════════════ -->
+<section id="contact" class="relative py-24 lg:py-32" style="background:linear-gradient(160deg,#001530,#002244)">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+
+    <div class="glass rounded-3xl p-10 lg:p-16 relative overflow-hidden reveal">
+      <div class="absolute -top-20 -right-20 w-64 h-64 bg-mint/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-navy/40 rounded-full blur-3xl"></div>
+
+      <div class="relative z-10">
+        <div class="w-16 h-16 rounded-2xl btn-primary flex items-center justify-center mx-auto mb-6 shadow-2xl">
+          <i class="fa-solid fa-leaf text-white text-2xl"></i>
+        </div>
+        <div class="section-label mb-4 text-center">Ready to Partner?</div>
+        <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-5">
+          Join the Zero-Waste<br/><span class="text-mint">Revolution</span>
+        </h2>
+        <p class="text-cream/60 max-w-xl mx-auto mb-10 leading-relaxed">
+          Whether you're a retailer, distributor, investor, or NGO partner — FreshSense is open for collaboration. Let's reshape Egypt's food system together.
+        </p>
+
+        <div class="flex flex-wrap gap-4 justify-center mb-8">
+          <a href="mailto:hello@freshsense.eg" class="btn-primary text-white font-semibold px-8 py-4 rounded-full text-sm shadow-2xl flex items-center gap-2">
+            <i class="fa-solid fa-envelope"></i> Partner With Us
+          </a>
+          <a href="#roi" class="btn-outline font-semibold px-8 py-4 rounded-full text-sm flex items-center gap-2">
+            <i class="fa-solid fa-calculator"></i> Run Your ROI
+          </a>
+        </div>
+
+        <div class="flex flex-wrap gap-6 justify-center text-sm text-muted">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-location-dot text-mint"></i>
+            <span>Cairo, Egypt</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-envelope text-mint"></i>
+            <span>hello@freshsense.eg</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fa-brands fa-linkedin text-mint"></i>
+            <span>linkedin.com/company/freshsense</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════════ -->
+<footer class="bg-navyD border-t border-white/5 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-5">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl btn-primary flex items-center justify-center">
+          <i class="fa-solid fa-leaf text-white text-xs"></i>
+        </div>
+        <span class="font-display font-bold text-white">Fresh<span class="text-mint">Sense</span></span>
+      </div>
+      <div class="flex gap-6 text-xs text-muted">
+        <a href="#sdg"     class="hover:text-mint transition-colors">SDGs</a>
+        <a href="#product" class="hover:text-mint transition-colors">Product</a>
+        <a href="#roi"     class="hover:text-mint transition-colors">ROI</a>
+        <a href="#timeline" class="hover:text-mint transition-colors">Journey</a>
+      </div>
+      <div class="text-xs text-muted">
+        © 2024 FreshSense Egypt · Aligned with UN SDGs 2, 12 &amp; 13
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     All interactive logic: nav, counter, sensor, SDG toggle,
+     product tabs, ROI calculator, scroll reveal
+═══════════════════════════════════════════════════════════ -->
+<script>
+/* ─── Navbar scroll effect ──────────────────────────────── */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 60) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+/* ─── Mobile menu toggle ────────────────────────────────── */
+document.getElementById('menuToggle').addEventListener('click', () => {
+  const menu = document.getElementById('mobileMenu');
+  menu.classList.toggle('hidden');
+});
+function closeMobileMenu() {
+  document.getElementById('mobileMenu').classList.add('hidden');
+}
+
+/* ─── Live Impact Counter ───────────────────────────────────
+     Starts at a plausible "already saved" baseline and ticks
+     up at 7 kg/second (global estimate). Formats with commas.
+──────────────────────────────────────────────────────────── */
+let impactKg = 1_248_376;
+const impactEl  = document.getElementById('impact-counter');
+const impactBar = document.getElementById('impact-bar');
+const DAILY_TARGET = 50_000;
+
+function formatNum(n) {
+  return Math.floor(n).toLocaleString('en-US');
+}
+
+setInterval(() => {
+  impactKg += 7;
+  impactEl.textContent = formatNum(impactKg);
+  const pct = Math.min((impactKg % DAILY_TARGET) / DAILY_TARGET * 100, 100);
+  impactBar.style.width = pct + '%';
+}, 1000);
+
+// Initial render
+impactEl.textContent = formatNum(impactKg);
+
+/* ─── Sensor State Animation ────────────────────────────────
+     setSensor(state) changes the sticker color, label, desc,
+     and dot indicators in the hero sensor card.
+──────────────────────────────────────────────────────────── */
+const sensorStates = {
+  fresh: {
+    label:    'FRESH',
+    desc:     'Chromatic ink: Vibrant Green — all compounds nominal',
+    gradient: 'linear-gradient(135deg,#11CAA0,#0da882)',
+    dots:     ['mint', 'off', 'off'],
+    icon:     'fa-droplet'
+  },
+  caution: {
+    label:    'USE SOON',
+    desc:     'Chromatic ink: Amber Yellow — VOC levels rising, consume within 24h',
+    gradient: 'linear-gradient(135deg,#f0c040,#d4a020)',
+    dots:     ['mint', 'yellow', 'off'],
+    icon:     'fa-clock'
+  },
+  expired: {
+    label:    'EXPIRED',
+    desc:     'Chromatic ink: Alert Red — microbial threshold exceeded, discard',
+    gradient: 'linear-gradient(135deg,#e05050,#c03030)',
+    dots:     ['mint', 'yellow', 'red'],
+    icon:     'fa-triangle-exclamation'
+  }
+};
+
+let autoSensorIdx = 0;
+const autoSensorCycle = ['fresh','caution','expired'];
+
+function setSensor(state) {
+  const s = sensorStates[state];
+  const dot  = document.getElementById('sensorDot');
+  const lbl  = document.getElementById('sensorLabel');
+  const desc = document.getElementById('sensorDesc');
+  const dotColors = {
+    mint:   'bg-mint',
+    yellow: 'bg-yellow-400',
+    red:    'bg-red-400',
+    off:    'bg-white/20'
+  };
+
+  dot.style.background = s.gradient;
+  dot.innerHTML = `<i class="fa-solid ${s.icon} text-white text-2xl drop-shadow-lg"></i>`;
+  lbl.textContent  = s.label;
+  desc.textContent = s.desc;
+
+  ['s1','s2','s3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = `w-3 h-3 rounded-full transition-all duration-700 ${dotColors[s.dots[i]]}`;
+  });
+}
+
+// Auto-cycle sensor every 4 seconds
+setInterval(() => {
+  autoSensorIdx = (autoSensorIdx + 1) % autoSensorCycle.length;
+  setSensor(autoSensorCycle[autoSensorIdx]);
+}, 4000);
+
+/* ─── SDG Toggle ─────────────────────────────────────────────
+     toggleSDG(id) opens/closes the detail panel and rotates
+     the chevron icon.
+──────────────────────────────────────────────────────────── */
+const openSDGs = new Set();
+
+function toggleSDG(id) {
+  const detail = document.getElementById(`sdg-${id}-detail`);
+  const icon   = document.getElementById(`sdg-${id}-icon`);
+  const card   = document.getElementById(`sdg-${id}`);
+
+  if (openSDGs.has(id)) {
+    openSDGs.delete(id);
+    detail.classList.remove('open');
+    icon.style.transform   = 'rotate(0deg)';
+    card.classList.remove('active');
+  } else {
+    openSDGs.add(id);
+    detail.classList.add('open');
+    icon.style.transform   = 'rotate(180deg)';
+    card.classList.add('active');
+  }
+}
+
+/* ─── Product Tabs ───────────────────────────────────────────
+     switchTab(id) shows the correct content panel and updates
+     the active tab button state.
+──────────────────────────────────────────────────────────── */
+function switchTab(id) {
+  const tabs    = ['core','actual','augmented'];
+  tabs.forEach(t => {
+    const panel = document.getElementById(`tab-${t}`);
+    const btn   = document.getElementById(`tab-btn-${t}`);
+    if (t === id) {
+      panel.classList.add('active');
+      btn.classList.add('active');
+      btn.classList.replace('text-cream/60','text-white');
+    } else {
+      panel.classList.remove('active');
+      btn.classList.remove('active');
+      if (!btn.classList.contains('text-white')) return;
+      btn.classList.replace('text-white','text-cream/60');
+    }
+  });
+}
+
+/* ─── ROI Calculator ─────────────────────────────────────────
+     updateROI(value) recalculates all outputs when the slider
+     changes. Methodology:
+       waste_rate  = 25.2% (FAO Egypt 2023)
+       recovery    = 28%   (FreshSense efficacy estimate)
+       co2_factor  = 0.62 kg CO₂/kg food wasted (WRAP 2022)
+       meal_cost   = EGP 40 avg. Egyptian meal
+──────────────────────────────────────────────────────────── */
+function updateROI(val) {
+  const spend    = parseFloat(val);
+  const WASTE_RATE   = 0.252;
+  const RECOVERY     = 0.28;
+  const CO2_FACTOR   = 0.62;
+  const MEAL_COST    = 40;
+
+  const moneySaved  = Math.round(spend * WASTE_RATE * RECOVERY);
+  const weightKg    = (spend * WASTE_RATE * RECOVERY) / 80;   // avg EGP 80/kg food
+  const co2Monthly  = parseFloat((weightKg * CO2_FACTOR).toFixed(1));
+  const mealsMonth  = Math.round(moneySaved / MEAL_COST);
+
+  // Update display
+  document.getElementById('roi-spend-display').textContent = spend.toLocaleString('en-US');
+  document.getElementById('roi-money').textContent         = moneySaved.toLocaleString('en-US');
+  document.getElementById('roi-money-annual').textContent  = (moneySaved * 12).toLocaleString('en-US');
+  document.getElementById('roi-co2').textContent           = co2Monthly;
+  document.getElementById('roi-co2-annual').textContent    = Math.round(co2Monthly * 12);
+  document.getElementById('roi-meals').textContent         = mealsMonth;
+  document.getElementById('roi-meals-annual').textContent  = mealsMonth * 12;
+
+  // Update slider fill percentage via CSS custom property
+  const slider = document.getElementById('roi-slider');
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const pct = ((val - min) / (max - min)) * 100;
+  slider.style.setProperty('--pct', pct + '%');
+}
+
+// Init with default value
+updateROI(3000);
+
+/* ─── Scroll Reveal ──────────────────────────────────────────
+     IntersectionObserver adds .visible class when elements
+     scroll into viewport, triggering CSS transitions.
+──────────────────────────────────────────────────────────── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+  revealObserver.observe(el);
+});
+</script>
+
+</body>
+</html>
